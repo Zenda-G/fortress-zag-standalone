@@ -1,0 +1,79 @@
+{
+  "agent": {
+    "name": "Zag",
+    "workdir": "./data"
+  },
+  
+  "models": {
+    "defaultProvider": "openai",
+    
+    "openai": {
+      "apiKey": "${OPENAI_API_KEY}",
+      "model": "gpt-4"
+    },
+    
+    "anthropic": {
+      "apiKey": "${ANTHROPIC_API_KEY}",
+      "model": "claude-3-sonnet-20240229"
+    },
+    
+    "moonshot": {
+      "apiKey": "${MOONSHOT_API_KEY}",
+      "model": "moonshot-v1-8k"
+    },
+    
+    "ollama": {
+      "baseUrl": "http://localhost:11434",
+      "model": "llama2"
+    }
+  },
+  
+  "interfaces": {
+    "cli": {
+      "enabled": true
+    },
+    
+    "telegram": {
+      "enabled": false,
+      "token": "${TELEGRAM_BOT_TOKEN}",
+      "allowedUsers": []
+    },
+    
+    "discord": {
+      "enabled": false,
+      "token": "${DISCORD_BOT_TOKEN}",
+      "allowedChannels": [],
+      "allowedUsers": [],
+      "prefix": "!zag"
+    },
+    
+    "web": {
+      "enabled": true,
+      "port": 3000,
+      "password": null
+    }
+  },
+  
+  "browser": {
+    "enabled": true,
+    "headless": true,
+    "screenshotDir": "./data/screenshots"
+  },
+  
+  "scheduler": {
+    "enabled": true,
+    "persist": true
+  },
+  
+  "security": {
+    "level": "hardened",
+    "sandbox": {
+      "enabled": true,
+      "mode": "process"
+    }
+  },
+  
+  "memory": {
+    "path": "./data"
+  }
+}

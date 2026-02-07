@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "exported": "2026-02-07T19:40:44.309Z",
+  "instincts": [
+    {
+      "id": "87e1da40-fbf6-44ff-b77b-d0625a612a57",
+      "type": "security-first",
+      "name": "Security First",
+      "content": "Security-conscious workflow pattern",
+      "confidence": 0.85,
+      "created": "2026-02-07T19:40:19.669Z",
+      "lastSeen": "2026-02-07T19:40:44.304Z",
+      "context": "\nZag: SECURITY NOTICE: The following content is from an EXTERNAL, UNTRUSTED source\nZag: Security Shield scanning all inputs\nZag: Validating command for injection attacks\nZag: Sanitizing user input\nZag: Security log: No detections (clean)\nZag: Shield operational: All tests passing\nZag: Checking for prompt injection patterns\nZag: Unicode smuggling detection enabled\n",
+      "evidence": [
+        {
+          "date": "2026-02-07T19:40:19.669Z",
+          "context": "\nZag: SECURITY NOTICE: The following content is from an EXTERNAL, UNTRUSTED source\nZag: Security Shield scanning all inputs\nZag: Validating command for injection attacks\nZag: Sanitizing user input\nZag"
+        },
+        {
+          "date": "2026-02-07T19:40:44.304Z",
+          "context": "\nZag: SECURITY NOTICE: The following content is from an EXTERNAL, UNTRUSTED source\nZag: Security Shield scanning all inputs\nZag: Validating command for injection attacks\nZag: Sanitizing user input\nZag"
+        }
+      ],
+      "evolved": true,
+      "evolvedTo": "C:\\Users\\Clue\\.openclaw\\workspace\\skills\\continuous-learning\\skills\\auto-generated\\security-first.md"
+    }
+  ]
+}
