@@ -1,12 +1,29 @@
-# FORTRESS ZAG STANDALONE v4.3
+# FORTRESS ZAG STANDALONE v4.4
 
-**A fully autonomous, security-hardened AI assistant with Verification, Checkpoints, Continuous Evaluation, Memory Dashboard, Task Scheduler V2, Git-backed memory, cloud compute, and Bat-Gadget Protocol.**
+**A fully autonomous, security-hardened AI assistant with Continuous Learning, Context Compaction, Verification, Checkpoints, Continuous Evaluation, Memory Dashboard, Task Scheduler V2, Git-backed memory, cloud compute, and Bat-Gadget Protocol.**
 
-[![Version](https://img.shields.io/badge/version-4.3.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-4.4.0-blue.svg)]()
 [![Security](https://img.shields.io/badge/security-hardened-green.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)]()
 
-## 🚀 What's New in v4.3
+## 🚀 What's New in v4.4
+
+### ✅ Continuous Learning v3
+- **Pattern extraction** - Automatically learns from interactions
+- **Instinct generation** - Creates reusable response patterns
+- **Input categorization** - Classifies requests by intent
+- **Confidence scoring** - Prioritizes high-quality instincts
+- **Knowledge consolidation** - Merges similar patterns over time
+- **Import/export** - Share learned knowledge
+
+### ✅ Context Compaction v2
+- **Smart compaction** - Preserves important messages
+- **Multiple strategies** - smart, summary, truncation, hybrid
+- **Importance scoring** - Ranks messages by relevance
+- **Automatic triggers** - Compacts when context fills
+- **Compaction history** - Tracks compression statistics
+
+## 🚀 What's in v4.3
 
 ### ✅ Verification System
 - **Self-check before committing** - Validates code changes
@@ -550,6 +567,8 @@ docker run -d \
 | **Web UI** | ✅ Native | ✅ + Memory Dashboard |
 | **Portability** | Limited | ✅ Universal |
 | **Control** | Framework | ✅ Full source |
+| **v4.4:** Continuous Learning | ❌ | ✅ Pattern extraction |
+| **v4.4:** Context Compaction | ❌ | ✅ Smart compaction |
 | **v4.3:** Verification System | ❌ | ✅ Pre-commit checks |
 | **v4.3:** Checkpoint System | ❌ | ✅ Save/restore state |
 | **v4.3:** Continuous Eval | ❌ | ✅ Quality monitoring |
@@ -614,10 +633,14 @@ fortress-zag-standalone/
 │   │   ├── bat-gadget-loader.js
 │   │   └── bat-gadget-registry.js
 │   └── index.js              # Main entry
+├── skills/                    # v4.4: Enhancement skills
+│   ├── continuous-learning/   # Pattern extraction
+│   │   └── continuous-learning-v3.js
+│   └── context-compaction/    # Smart compaction
+│       └── context-compaction-v2.js
 ├── bat-gadgets/              # v4.1: Modular gadgets
 │   ├── web-scraping/GADGET.md
 │   └── code-analysis/GADGET.md
-├── skills/                    # Enhancement skills
 ├── data/                      # Runtime data (created)
 ├── operating_system/          # v4.0: Memory, SOUL, SKILLS
 │   ├── MEMORY.md             # Git-backed memory file
