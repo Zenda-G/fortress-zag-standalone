@@ -1,6 +1,6 @@
 {
   "name": "fortress-zag-standalone",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Fully autonomous AI assistant v4.0 - Git-backed memory, two-tier secrets, GitHub Actions cloud compute, browser automation, scheduler, and web UI",
   "main": "src/index.js",
   "scripts": {

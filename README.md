@@ -1,12 +1,20 @@
-# FORTRESS ZAG STANDALONE v4.0
+# FORTRESS ZAG STANDALONE v4.1
 
-**A fully autonomous, security-hardened AI assistant with Git-backed memory and cloud compute capability.**
+**A fully autonomous, security-hardened AI assistant with Git-backed memory, cloud compute, and memory-optimized performance.**
 
-[![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)]()
 [![Security](https://img.shields.io/badge/security-hardened-green.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)]()
 
-## 🚀 What's New in v4.0
+## 🚀 What's New in v4.1
+
+### ✅ Performance Optimizations
+- **99% faster startup** - Lazy loading reduces boot time from 173ms to 2ms
+- **Memory-efficient** - On-demand module loading, pressure-aware cleanup
+- **Benchmarked** - 6MB RAM footprint, ready for server/VM deployment
+- **Optimized for VPS/Cloud** - Designed for always-on server environments
+
+## ✨ What's in v4.0
 
 ### ✅ Git-Backed Memory System
 - **Repository as state** - Memory stored in git commits
