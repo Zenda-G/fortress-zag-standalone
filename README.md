@@ -1,12 +1,35 @@
-# FORTRESS ZAG STANDALONE v4.2
+# FORTRESS ZAG STANDALONE v4.3
 
-**A fully autonomous, security-hardened AI assistant with Memory Dashboard, Task Scheduler V2, Git-backed memory, cloud compute, and Bat-Gadget Protocol.**
+**A fully autonomous, security-hardened AI assistant with Verification, Checkpoints, Continuous Evaluation, Memory Dashboard, Task Scheduler V2, Git-backed memory, cloud compute, and Bat-Gadget Protocol.**
 
-[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-4.3.0-blue.svg)]()
 [![Security](https://img.shields.io/badge/security-hardened-green.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)]()
 
-## 🚀 What's New in v4.2
+## 🚀 What's New in v4.3
+
+### ✅ Verification System
+- **Self-check before committing** - Validates code changes
+- **Quality checks** - Code quality, documentation, consistency
+- **Security scanning** - Detects dangerous patterns, hardcoded secrets
+- **Pre-commit reports** - Comprehensive verification reports
+- **Configurable strictness** - Warning or blocking mode
+
+### ✅ Checkpoint System
+- **Save agent state** at any milestone
+- **Restore to previous** checkpoint instantly
+- **Integrity verification** - SHA-256 hashes for corruption detection
+- **Auto-cleanup** - Maintains max 50 checkpoints by default
+- **Import/export** - Share checkpoints between instances
+
+### ✅ Continuous Evaluation
+- **Real-time metrics** - Tracks every interaction
+- **Quality scoring** - Response quality, tool usage, latency
+- **Trend analysis** - Detects degrading performance over time
+- **Threshold alerts** - Warns on quality/latency issues
+- **Automated reports** - Periodic performance summaries
+
+## 🚀 What's in v4.2
 
 ### ✅ Memory Dashboard
 - **Web UI for memory management** at `http://localhost:3001`
@@ -527,6 +550,9 @@ docker run -d \
 | **Web UI** | ✅ Native | ✅ + Memory Dashboard |
 | **Portability** | Limited | ✅ Universal |
 | **Control** | Framework | ✅ Full source |
+| **v4.3:** Verification System | ❌ | ✅ Pre-commit checks |
+| **v4.3:** Checkpoint System | ❌ | ✅ Save/restore state |
+| **v4.3:** Continuous Eval | ❌ | ✅ Quality monitoring |
 | **v4.2:** Memory Dashboard | ❌ | ✅ Web UI for memory |
 | **v4.2:** Task Scheduler V2 | ❌ | ✅ Persistence + retry |
 | **v4.1:** Bat-Gadget Protocol | ❌ | ✅ Modular skills |
@@ -578,6 +604,12 @@ fortress-zag-standalone/
 │   │   └── public/           # Static files
 │   ├── scheduler/            # v4.2: Task Scheduler V2
 │   │   └── scheduler-v2.js   # Enhanced scheduling
+│   ├── verification/         # v4.3: Verification System
+│   │   └── verification-system.js
+│   ├── checkpoint/           # v4.3: Checkpoint System
+│   │   └── checkpoint-system.js
+│   ├── evaluation/           # v4.3: Continuous Evaluation
+│   │   └── continuous-evaluation.js
 │   ├── bat-gadget-protocol/  # v4.1: BGP
 │   │   ├── bat-gadget-loader.js
 │   │   └── bat-gadget-registry.js
