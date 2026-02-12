@@ -2,6 +2,9 @@
  * FORTRESS ZAG STANDALONE - Main Entry Point (Full Version)
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 const { FortressZag } = require('./core/agent.js');
 const { TelegramInterface } = require('./interfaces/telegram.js');
 const { DiscordInterface } = require('./interfaces/discord.js');
