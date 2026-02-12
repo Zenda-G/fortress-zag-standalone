@@ -1,7 +1,12 @@
 /**
- * FORTRESS ZAG STANDALONE v4.3 - Core Agent
+ * FORTRESS ZAG STANDALONE v4.4 - Core Agent
  * 
  * Complete autonomous agent with all capabilities.
+ * 
+ * v4.4 Enhancements:
+ * - Continuous Learning v3 - Full pattern extraction and instinct generation
+ * - Context Compaction v2 - Smart memory management with multiple strategies
+ * - Multi-Agent Orchestration - PM2-style agent swarm management
  * 
  * v4.3 Enhancements:
  * - Verification System - Self-check before committing changes
@@ -57,8 +62,8 @@ const { CheckpointSystem } = require('../checkpoint/checkpoint-system.js');
 const { ContinuousEvaluation } = require('../evaluation/continuous-evaluation.js');
 
 // Skills
-const continuousLearning = require('../../skills/continuous-learning/continuous-learning.js');
-const contextCompaction = require('../../skills/context-compaction/context-compaction.js');
+const { ContinuousLearningV3 } = require('../../skills/continuous-learning/continuous-learning-v3.js');
+const { ContextCompactionV2 } = require('../../skills/context-compaction/context-compaction-v2.js');
 
 class FortressZag extends EventEmitter {
   constructor(options = {}) {
@@ -122,6 +127,19 @@ class FortressZag extends EventEmitter {
       evaluationInterval: options.evaluationInterval || 60000
     });
     
+    // v4.4: Continuous Learning v3
+    this.learning = new ContinuousLearningV3({
+      enabled: options.enableLearning !== false,
+      instinctsDir: path.join(this.workdir, 'instincts'),
+      patternsDir: path.join(this.workdir, 'patterns')
+    });
+    
+    // v4.4: Context Compaction v2
+    this.compaction = new ContextCompactionV2({
+      enabled: options.enableCompaction !== false,
+      strategy: options.compactionStrategy || 'smart'
+    });
+    
     // System prompt (built on demand)
     this._systemPrompt = null;
   }
@@ -131,7 +149,8 @@ class FortressZag extends EventEmitter {
    */
   async initialize() {
     console.log('╔════════════════════════════════════════════════════════╗');
-    console.log('║  FORTRESS ZAG STANDALONE v4.3                          ║');
+    console.log('║  FORTRESS ZAG STANDALONE v4.4                          ║');
+    console.log('║  Learning v3 • Context Compaction • Multi-Agent        ║');
     console.log('║  Verification • Checkpoints • Continuous Eval          ║');
     console.log('║  Memory Dashboard • Task Scheduler V2 • Bat-Gadgets    ║');
     console.log('║  Git-Backed Memory • Two-Tier Secrets • Cloud Ready    ║');
@@ -237,6 +256,17 @@ class FortressZag extends EventEmitter {
       console.log(`  Continuous Eval: ❌`);
     }
     
+    // v4.4: Initialize P3 systems
+    console.log('\nv4.4 Intelligence Systems:');
+    
+    // Continuous learning
+    const learningStats = this.learning.getStats();
+    console.log(`  Learning v3: ${this.learning.enabled ? '✅' : '❌'} (${learningStats.totalInstincts} instincts, ${learningStats.totalPatterns} patterns)`);
+    
+    // Context compaction
+    const compactionStats = this.compaction.getStats();
+    console.log(`  Context Compaction: ${this.compaction.enabled ? '✅' : '❌'} (${compactionStats.totalCompactions} compactions)`);
+    
     this.initialized = true;
     
     console.log(`\n✅ Agent initialized: ${this.sessionId}`);
@@ -335,16 +365,28 @@ Session: ${this.sessionId}`);
       source: message.source
     });
     
+    // v4.4: Apply learned instincts
+    const instinctHints = this.learning.applyInstincts(sanitized.sanitized);
+    if (instinctHints) {
+      this.context.push({
+        role: 'system',
+        content: `[Instinct matched: ${instinctHints.confidence.toFixed(2)} confidence for ${instinctHints.category}]`,
+        instinctHints
+      });
+    }
+    
     // Check context size
     const contextSize = JSON.stringify(this.context).length;
-    const compactionStatus = contextCompaction.getContextStatus(contextSize, 100000);
+    const compactionStatus = this.compaction.shouldCompact(this.context, 100000);
     
-    if (compactionStatus.threshold === 'CRITICAL') {
-      this.compactContext();
+    if (compactionStatus.needed) {
+      this.context = await this.compaction.compact(this.context, { force: compactionStatus.urgency === 'critical' });
     }
     
     // Generate AI response with tool use
+    const startTime = Date.now();
     const response = await this.generateAIResponse();
+    const duration = Date.now() - startTime;
     
     // Add response to context
     this.context.push({
@@ -354,10 +396,29 @@ Session: ${this.sessionId}`);
       toolCalls: response.toolCalls
     });
     
-    // Learn from interaction
-    continuousLearning.learnFromContext(
-      `User: ${sanitized.sanitized}\nZag: ${response.text}`
-    );
+    // v4.4: Learn from interaction
+    await this.learning.learnFromInteraction({
+      input: sanitized.sanitized,
+      response: response.text,
+      toolsUsed: response.toolCalls,
+      success: !response.error,
+      duration,
+      context: this.context.length
+    });
+    
+    // v4.4: Record for evaluation
+    if (this.evaluation.enabled) {
+      this.evaluation.recordInteraction({
+        sessionId: this.sessionId,
+        response: response.text,
+        toolCalls: response.toolCalls,
+        contextSize,
+        maxContextSize: 100000,
+        duration,
+        error: response.error,
+        blocked: false
+      });
+    }
     
     // Save memory (both file-based and git-backed)
     this.saveMemory();
@@ -725,6 +786,15 @@ Session: ${this.sessionId}`);
       evaluation: this.evaluation ? {
         enabled: this.evaluation.enabled,
         stats: this.evaluation.getStats()
+      } : null,
+      // v4.4: P3 systems status
+      learning: this.learning ? {
+        enabled: this.learning.enabled,
+        stats: this.learning.getStats()
+      } : null,
+      compaction: this.compaction ? {
+        enabled: this.compaction.enabled,
+        stats: this.compaction.getStats()
       } : null
     };
   }
