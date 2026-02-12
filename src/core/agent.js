@@ -1,7 +1,16 @@
 /**
- * FORTRESS ZAG STANDALONE - Core Agent (Full Version)
+ * FORTRESS ZAG STANDALONE v4.0 - Core Agent
  * 
  * Complete autonomous agent with all capabilities.
+ * 
+ * v4.0 Enhancements:
+ * - Git-backed memory system (repo = state, fork = clone agent)
+ * - Two-tier secrets manager (SECRETS filtered, LLM_SECRETS accessible)
+ * - GitHub Actions cloud compute integration
+ * - Multi-provider LLM with automatic fallback
+ * - Browser automation (Playwright)
+ * - Task scheduling (node-cron)
+ * - 3-layer security (perimeter → validator → sandbox)
  */
 
 const fs = require('fs');
@@ -18,6 +27,10 @@ const scheduler = require('./scheduler.js');
 const perimeter = require('../security/perimeter.js');
 const validator = require('../security/validator.js');
 const sandbox = require('../security/sandbox.js');
+
+// v4.0 Additions
+const { GitBackedMemory } = require('../memory/git-backed.js');
+const { SecretsManager } = require('../security/secrets-manager.js');
 
 // Skills
 const continuousLearning = require('../../skills/continuous-learning/continuous-learning.js');
@@ -42,6 +55,20 @@ class FortressZag extends EventEmitter {
     // Initialize model router
     this.models = new ModelRouter(this.config.models || {});
     
+    // v4.0: Initialize git-backed memory
+    this.gitMemory = new GitBackedMemory({
+      memoryPath: options.memoryPath || 'operating_system/MEMORY.md',
+      repoRoot: options.repoRoot || process.cwd(),
+      soulPath: 'SOUL.md'
+    });
+    
+    // v4.0: Initialize two-tier secrets
+    this.secrets = new SecretsManager();
+    
+    // v4.0: Browser instance for automation
+    this.browserInstance = null;
+    this.browserPage = null;
+    
     // System prompt
     this.systemPrompt = this.buildSystemPrompt();
   }
@@ -51,19 +78,28 @@ class FortressZag extends EventEmitter {
    */
   async initialize() {
     console.log('╔════════════════════════════════════════════════════════╗');
-    console.log('║  FORTRESS ZAG STANDALONE v2.0                          ║');
-    console.log('║  Fully Autonomous AI Agent                             ║');
+    console.log('║  FORTRESS ZAG STANDALONE v4.0                          ║');
+    console.log('║  Fully Autonomous AI Agent with Git-Backed Memory      ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
     
     // Ensure directories exist
     this.ensureDirectories();
     
-    // Load memory
+    // v4.0: Load secrets
+    this.secrets.loadFromEnv();
+    const secretsValid = this.secrets.validate();
+    console.log('Secrets Status:', secretsValid ? '✅ Valid' : '⚠️  Some missing');
+    
+    // Load memory (both file-based and git-backed)
     this.loadMemory();
+    
+    // v4.0: Sync git memory
+    const syncResult = this.gitMemory.sync();
+    console.log('Git Memory Sync:', syncResult.success ? '✅' : '⚠️ ' + syncResult.message);
     
     // Security check
     const securityStatus = this.checkSecurity();
-    console.log('Security Status:', JSON.stringify(securityStatus, null, 2));
+    console.log('\nSecurity Status:', JSON.stringify(securityStatus, null, 2));
     
     // Model status
     console.log('\nModel Providers:');
@@ -75,26 +111,57 @@ class FortressZag extends EventEmitter {
     // Tools status
     console.log('\nTools Available:');
     console.log('  - read, write, edit, exec, web_fetch, web_search, list, search');
+    console.log('  - browser_navigate, browser_click, browser_type, browser_extract');
+    console.log('  - schedule, unschedule, list_schedules');
+    console.log('  - memory_read, memory_append, memory_history, memory_rollback');
+    console.log('  - git_commit, git_status');
     
     this.initialized = true;
     
     console.log(`\n✅ Agent initialized: ${this.sessionId}`);
     console.log(`   Identity: ${this.identity.name}`);
     console.log(`   Vibe: ${this.identity.vibe?.substring(0, 50)}...`);
+    console.log(`   Git-backed Memory: ${this.gitMemory.stats().memoryPath}`);
     
     this.emit('ready');
     return this;
   }
   
   /**
-   * Build system prompt from identity
+   * Build system prompt from identity and memory
    */
   buildSystemPrompt() {
-    return `You are ${this.identity.name}.
-${this.identity.vibe}
-
+    const parts = [];
+    
+    // Base identity
+    parts.push(`You are ${this.identity.name}.`);
+    parts.push(this.identity.vibe);
+    
+    // v4.0: Add git-backed memory content
+    const memoryContent = this.gitMemory.read();
+    if (memoryContent) {
+      parts.push('\n# Memory\n\n' + memoryContent);
+    }
+    
+    // v4.0: Add LLM-accessible secrets
+    const llmSecrets = this.secrets.getAllLLMSecrets();
+    if (Object.keys(llmSecrets).length > 0) {
+      parts.push('\n# Available Credentials\n');
+      for (const [key, value] of Object.entries(llmSecrets)) {
+        parts.push(`- ${key}: ${value.substring(0, 10)}...`);
+      }
+    }
+    
+    // Tools documentation
+    parts.push(`
 You have access to tools to help the user. Use them when appropriate.
-Available tools: read, write, edit, exec, web_fetch, web_search, list, search
+
+Available tools:
+- read, write, edit, exec, web_fetch, web_search, list, search
+- browser_navigate, browser_click, browser_type, browser_extract
+- schedule, unschedule, list_schedules
+- memory_read, memory_append, memory_history, memory_rollback
+- git_commit, git_status
 
 When using tools:
 1. Always validate inputs for safety
@@ -103,7 +170,9 @@ When using tools:
 4. Report errors clearly
 
 Current time: ${new Date().toISOString()}
-Session: ${this.sessionId}`;
+Session: ${this.sessionId}`);
+    
+    return parts.join('\n');
   }
   
   /**
@@ -156,8 +225,9 @@ Session: ${this.sessionId}`;
       `User: ${sanitized.sanitized}\nZag: ${response.text}`
     );
     
-    // Save memory
+    // Save memory (both file-based and git-backed)
     this.saveMemory();
+    this.updateGitMemory(sanitized.sanitized, response);
     
     return {
       text: response.text,
@@ -261,6 +331,33 @@ Session: ${this.sessionId}`;
    * Execute a tool with full security
    */
   async executeTool(toolName, params) {
+    // v4.0: Memory tools
+    if (toolName === 'memory_read') {
+      return { success: true, content: this.gitMemory.read() };
+    }
+    if (toolName === 'memory_append') {
+      this.gitMemory.append(params.content, { description: params.description });
+      return { success: true };
+    }
+    if (toolName === 'memory_history') {
+      const history = this.gitMemory.history({ limit: params.limit || 20 });
+      return { success: true, history };
+    }
+    if (toolName === 'memory_rollback') {
+      const success = this.gitMemory.rollback(params.commitHash, params.reason);
+      return { success };
+    }
+    
+    // v4.0: Git tools
+    if (toolName === 'git_commit') {
+      this.gitMemory.commit(params.message, { description: params.description });
+      return { success: true };
+    }
+    if (toolName === 'git_status') {
+      const stats = this.gitMemory.stats();
+      return { success: true, stats };
+    }
+    
     // Security validation for dangerous tools
     if (toolName === 'exec') {
       const validation = validator.validateCommand(params.command);
@@ -271,10 +368,11 @@ Session: ${this.sessionId}`;
         };
       }
       
-      // Use sandbox
+      // v4.0: Use filtered environment for exec
       const sandboxResult = await sandbox.sandboxExecute(params.command, {
         workspace: params.workdir,
-        timeout: params.timeout || 30000
+        timeout: params.timeout || 30000,
+        env: this.secrets.exportForLLM()  // Filtered environment
       });
       
       return sandboxResult.result;
@@ -363,6 +461,10 @@ Session: ${this.sessionId}`;
     
     const instincts = continuousLearning.viewInstincts();
     console.log(`Loaded ${instincts.total} instincts`);
+    
+    // v4.0: Load git memory stats
+    const gitStats = this.gitMemory.stats();
+    console.log(`Git memory: ${gitStats.totalCommits} commits, ${gitStats.memorySize} bytes`);
   }
   
   /**
@@ -375,6 +477,27 @@ Session: ${this.sessionId}`;
     const entry = `\n## ${new Date().toLocaleTimeString()}\n\n${JSON.stringify(this.context.slice(-2), null, 2)}\n`;
     
     fs.appendFileSync(memoryFile, entry);
+  }
+  
+  /**
+   * v4.0: Update git-backed memory
+   */
+  updateGitMemory(input, response) {
+    const timestamp = new Date().toISOString();
+    const memoryEntry = `
+## Session ${this.sessionId} [${timestamp}]
+
+**Input:** ${input.substring(0, 200)}${input.length > 200 ? '...' : ''}
+
+**Response:** ${response.text?.substring(0, 500) || 'Completed'}${(response.text?.length || 0) > 500 ? '...' : ''}
+
+**Tools Used:** ${response.toolCalls?.map(t => t.tool).join(', ') || 'None'}
+
+---
+`;
+    this.gitMemory.append(memoryEntry, { 
+      description: `Session ${this.sessionId} interaction`
+    });
   }
   
   /**
@@ -404,6 +527,10 @@ Session: ${this.sessionId}`;
         perimeter: true,
         validator: true,
         sandbox: sandbox.detectSandboxMode()
+      },
+      secrets: {
+        twoTier: true,
+        filteredKeys: this.secrets.filteredKeys.length
       }
     };
   }
@@ -423,8 +550,34 @@ Session: ${this.sessionId}`;
       sessionId: this.sessionId,
       identity: this.identity,
       contextLength: this.context.length,
-      workdir: this.workdir
+      workdir: this.workdir,
+      gitMemory: this.gitMemory.stats(),
+      secrets: {
+        twoTier: true,
+        llmSecretsCount: Object.keys(this.secrets.getAllLLMSecrets()).length
+      }
     };
+  }
+  
+  /**
+   * v4.0: Export agent state (for forking/cloning)
+   */
+  exportState() {
+    return {
+      ...this.gitMemory.exportState(),
+      sessionId: this.sessionId,
+      identity: this.identity,
+      config: this.config
+    };
+  }
+  
+  /**
+   * v4.0: Import agent state (from fork/clone)
+   */
+  importState(state) {
+    this.gitMemory.importState(state);
+    if (state.identity) this.identity = state.identity;
+    if (state.config) this.config = state.config;
   }
 }
 
