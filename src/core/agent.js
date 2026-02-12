@@ -1,7 +1,10 @@
 /**
- * FORTRESS ZAG STANDALONE v4.0 - Core Agent
+ * FORTRESS ZAG STANDALONE v4.1 - Core Agent
  * 
  * Complete autonomous agent with all capabilities.
+ * 
+ * v4.1 Enhancements:
+ * - SKILL.md standard skill system
  * 
  * v4.0 Enhancements:
  * - Git-backed memory system (repo = state, fork = clone agent)
@@ -31,6 +34,9 @@ const sandbox = require('../security/sandbox.js');
 // v4.0 Additions
 const { GitBackedMemory } = require('../memory/git-backed.js');
 const { SecretsManager } = require('../security/secrets-manager.js');
+
+// v4.1: Bat-Gadget Protocol (BGP)
+const { BatGadgetRegistry } = require('../bat-gadget-protocol/index.js');
 
 // Skills
 const continuousLearning = require('../../skills/continuous-learning/continuous-learning.js');
@@ -69,8 +75,11 @@ class FortressZag extends EventEmitter {
     this.browserInstance = null;
     this.browserPage = null;
     
-    // System prompt
-    this.systemPrompt = this.buildSystemPrompt();
+    // v4.1: Bat-Gadget Protocol registry
+    this.batGadgetRegistry = null;
+    
+    // System prompt (built on demand)
+    this._systemPrompt = null;
   }
   
   /**
@@ -78,8 +87,8 @@ class FortressZag extends EventEmitter {
    */
   async initialize() {
     console.log('╔════════════════════════════════════════════════════════╗');
-    console.log('║  FORTRESS ZAG STANDALONE v4.0                          ║');
-    console.log('║  Fully Autonomous AI Agent with Git-Backed Memory      ║');
+    console.log('║  FORTRESS ZAG STANDALONE v4.1                          ║');
+    console.log('║  Bat-Gadget Protocol • Git-Backed Memory • Cloud Ready ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
     
     // Ensure directories exist
@@ -115,6 +124,17 @@ class FortressZag extends EventEmitter {
     console.log('  - schedule, unschedule, list_schedules');
     console.log('  - memory_read, memory_append, memory_history, memory_rollback');
     console.log('  - git_commit, git_status');
+    
+    // v4.1: Initialize Bat-Gadget Protocol
+    this.batGadgetRegistry = new BatGadgetRegistry({
+      gadgetsDir: path.join(process.cwd(), 'bat-gadgets'),
+      availableTools: ['read', 'write', 'edit', 'exec', 'web_fetch', 'web_search', 'browser_navigate', 'browser_extract', 'browser_click']
+    });
+    const equippedGadgets = this.batGadgetRegistry.initialize();
+    console.log(`Utility Belt: ${equippedGadgets.length} gadgets equipped`);
+    for (const gadget of equippedGadgets) {
+      console.log(`  - ${gadget.metadata.name}`);
+    }
     
     this.initialized = true;
     
@@ -154,8 +174,17 @@ class FortressZag extends EventEmitter {
     
     // Tools documentation
     parts.push(`
-You have access to tools to help the user. Use them when appropriate.
+You have access to tools to help the user. Use them when appropriate.`);
 
+    // v4.1: Add equipped Bat-Gadgets from Utility Belt
+    if (this.batGadgetRegistry) {
+      const gadgetPrompt = this.batGadgetRegistry.getSystemPromptAdditions();
+      if (gadgetPrompt) {
+        parts.push(gadgetPrompt);
+      }
+    }
+
+    parts.push(`
 Available tools:
 - read, write, edit, exec, web_fetch, web_search, list, search
 - browser_navigate, browser_click, browser_type, browser_extract
@@ -243,7 +272,7 @@ Session: ${this.sessionId}`);
   async generateAIResponse() {
     // Prepare messages for model
     const messages = [
-      { role: 'system', content: this.systemPrompt },
+      { role: 'system', content: this.buildSystemPrompt() },
       ...this.context.slice(-10).map(m => ({ role: m.role, content: m.content }))
     ];
     
