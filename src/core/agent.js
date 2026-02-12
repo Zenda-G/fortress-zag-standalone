@@ -1,10 +1,14 @@
 /**
- * FORTRESS ZAG STANDALONE v4.1 - Core Agent
+ * FORTRESS ZAG STANDALONE v4.2 - Core Agent
  * 
  * Complete autonomous agent with all capabilities.
  * 
+ * v4.2 Enhancements:
+ * - Memory Dashboard - Web UI for memory management
+ * - Task Scheduler V2 - Enhanced scheduling with persistence and retry logic
+ * 
  * v4.1 Enhancements:
- * - SKILL.md standard skill system
+ * - Bat-Gadget Protocol (BGP) - Utility Belt system for modular capabilities
  * 
  * v4.0 Enhancements:
  * - Git-backed memory system (repo = state, fork = clone agent)
@@ -37,6 +41,10 @@ const { SecretsManager } = require('../security/secrets-manager.js');
 
 // v4.1: Bat-Gadget Protocol (BGP)
 const { BatGadgetRegistry } = require('../bat-gadget-protocol/index.js');
+
+// v4.2: P1 Enhancements
+const { MemoryDashboard } = require('../dashboard/index.js');
+const { TaskSchedulerV2 } = require('../scheduler/scheduler-v2.js');
 
 // Skills
 const continuousLearning = require('../../skills/continuous-learning/continuous-learning.js');
@@ -78,6 +86,14 @@ class FortressZag extends EventEmitter {
     // v4.1: Bat-Gadget Protocol registry
     this.batGadgetRegistry = null;
     
+    // v4.2: Memory Dashboard
+    this.memoryDashboard = null;
+    this.dashboardEnabled = options.enableDashboard !== false;
+    
+    // v4.2: Task Scheduler V2
+    this.schedulerV2 = null;
+    this.useSchedulerV2 = options.useSchedulerV2 || false;
+    
     // System prompt (built on demand)
     this._systemPrompt = null;
   }
@@ -87,8 +103,9 @@ class FortressZag extends EventEmitter {
    */
   async initialize() {
     console.log('╔════════════════════════════════════════════════════════╗');
-    console.log('║  FORTRESS ZAG STANDALONE v4.1                          ║');
-    console.log('║  Bat-Gadget Protocol • Git-Backed Memory • Cloud Ready ║');
+    console.log('║  FORTRESS ZAG STANDALONE v4.2                          ║');
+    console.log('║  Memory Dashboard • Task Scheduler V2 • Bat-Gadgets    ║');
+    console.log('║  Git-Backed Memory • Two-Tier Secrets • Cloud Ready    ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
     
     // Ensure directories exist
@@ -105,6 +122,25 @@ class FortressZag extends EventEmitter {
     // v4.0: Sync git memory
     const syncResult = this.gitMemory.sync();
     console.log('Git Memory Sync:', syncResult.success ? '✅' : '⚠️ ' + syncResult.message);
+    
+    // v4.2: Initialize Task Scheduler V2
+    if (this.useSchedulerV2) {
+      this.schedulerV2 = new TaskSchedulerV2({
+        workdir: this.workdir,
+        persistencePath: path.join(this.workdir, 'scheduler-v2.json'),
+        maxHistory: 100
+      });
+      
+      this.schedulerV2.on('jobSuccess', (data) => {
+        console.log(`[SchedulerV2] Job ${data.id} completed successfully (${data.duration}ms)`);
+      });
+      
+      this.schedulerV2.on('jobFailed', (data) => {
+        console.log(`[SchedulerV2] Job ${data.id} failed: ${data.error}`);
+      });
+      
+      console.log('Task Scheduler V2: ✅ Initialized');
+    }
     
     // Security check
     const securityStatus = this.checkSecurity();
@@ -131,9 +167,26 @@ class FortressZag extends EventEmitter {
       availableTools: ['read', 'write', 'edit', 'exec', 'web_fetch', 'web_search', 'browser_navigate', 'browser_extract', 'browser_click']
     });
     const equippedGadgets = this.batGadgetRegistry.initialize();
-    console.log(`Utility Belt: ${equippedGadgets.length} gadgets equipped`);
+    console.log(`\nUtility Belt: ${equippedGadgets.length} gadgets equipped`);
     for (const gadget of equippedGadgets) {
       console.log(`  - ${gadget.metadata.name}`);
+    }
+    
+    // v4.2: Initialize Memory Dashboard
+    if (this.dashboardEnabled) {
+      try {
+        this.memoryDashboard = new MemoryDashboard({
+          port: this.config.dashboardPort || 3001,
+          memoryPath: this.gitMemory.memoryPath,
+          repoRoot: this.gitMemory.repoRoot
+        });
+        
+        await this.memoryDashboard.start();
+        console.log(`\nMemory Dashboard: ✅ http://localhost:${this.memoryDashboard.port}`);
+      } catch (error) {
+        console.log(`\nMemory Dashboard: ⚠️  ${error.message}`);
+        this.memoryDashboard = null;
+      }
     }
     
     this.initialized = true;
@@ -142,6 +195,10 @@ class FortressZag extends EventEmitter {
     console.log(`   Identity: ${this.identity.name}`);
     console.log(`   Vibe: ${this.identity.vibe?.substring(0, 50)}...`);
     console.log(`   Git-backed Memory: ${this.gitMemory.stats().memoryPath}`);
+    
+    if (this.schedulerV2) {
+      console.log(`   Task Scheduler V2: ${this.schedulerV2.getStats().totalJobs} jobs loaded`);
+    }
     
     this.emit('ready');
     return this;
@@ -387,6 +444,30 @@ Session: ${this.sessionId}`);
       return { success: true, stats };
     }
     
+    // v4.2: Task Scheduler V2 tools
+    if (this.schedulerV2) {
+      if (toolName === 'schedule_v2') {
+        try {
+          const job = this.schedulerV2.scheduleJob(
+            params.id,
+            params.expression,
+            params.task,
+            params.options || {}
+          );
+          return { success: true, job };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      }
+      if (toolName === 'schedule_v2_stats') {
+        return { success: true, stats: this.schedulerV2.getStats() };
+      }
+      if (toolName === 'schedule_v2_history') {
+        const history = this.schedulerV2.getHistory(params.options || {});
+        return { success: true, history };
+      }
+    }
+    
     // Security validation for dangerous tools
     if (toolName === 'exec') {
       const validation = validator.validateCommand(params.command);
@@ -434,7 +515,7 @@ Session: ${this.sessionId}`);
       return await browser.browserExtract(params);
     }
     
-    // Scheduler
+    // Scheduler v1
     if (toolName === 'schedule') {
       const job = scheduler.scheduleJob(params.id, params.expression, params.task, params.options);
       return { success: true, job };
@@ -584,7 +665,9 @@ Session: ${this.sessionId}`);
       secrets: {
         twoTier: true,
         llmSecretsCount: Object.keys(this.secrets.getAllLLMSecrets()).length
-      }
+      },
+      dashboard: this.memoryDashboard ? `http://localhost:${this.memoryDashboard.port}` : null,
+      schedulerV2: this.schedulerV2 ? this.schedulerV2.getStats() : null
     };
   }
   
@@ -607,6 +690,26 @@ Session: ${this.sessionId}`);
     this.gitMemory.importState(state);
     if (state.identity) this.identity = state.identity;
     if (state.config) this.config = state.config;
+  }
+  
+  /**
+   * v4.2: Stop the agent gracefully
+   */
+  async stop() {
+    console.log('\nStopping Fortress Zag...');
+    
+    if (this.schedulerV2) {
+      this.schedulerV2.stopAll();
+      console.log('  Task Scheduler V2: Stopped');
+    }
+    
+    if (this.memoryDashboard) {
+      this.memoryDashboard.stop();
+      console.log('  Memory Dashboard: Stopped');
+    }
+    
+    this.initialized = false;
+    console.log('✅ Agent stopped gracefully');
   }
 }
 

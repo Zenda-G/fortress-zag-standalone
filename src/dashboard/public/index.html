@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Memory Dashboard - Fortress Zag</title>
+    <link rel='stylesheet' href='styles.css'>
+    <script src='dashboard.js' defer></script>
+</head>
+<body>
+    <header>
+        <h1>⚡ Memory Dashboard</h1>
+        <div class='status'>
+            <span id='status'>Initializing...</span>
+        </div>
+    </header>
+
+    <main>
+        <section class='stats-section>
+            <h2><span class='icon></span> Memory Statistics</h2>
+            <div class='stats-grid>
+                <div class='stat-card>
+                    <h3>Total Size</h3>
+                    <div class='stat-value><span id='totalSize'>--</span> bytes</div>
+                </div>
+                <div class='stat-card>
+                    <h3>Memory Files</h3>
+                    <div class='stat-value><span id='memoryFiles'>--</span> files</div>
+                </div>
+                <div class='stat-card>
+                    <h3>Git Commits</h3>
+                    <div class='stat-value><span id='gitCommits'>--</span> commits</div>
+                </div>
+                <div class='stat-card>
+                    <h3>Context Usage</h3>
+                    <div class='stat-value><span id='contextUsage'>--</span>%</div>
+                </div>
+            </div>
+        </section>
+
+        <section class='memory-section>
+            <h2><span class='icon></span> Main Memory</h2>
+            <textarea id='memoryContent' readonly></textarea>
+            <div class='memory-actions>
+                <button id='refreshMemory' class='btn btn-primary>Refresh</button>
+                <button id='saveMemory' class='btn btn-secondary>Save</button>
+            </div>
+        </section>
+
+        <section class='history-section>
+            <h2><span class='icon></span> Memory History</h2>
+            <div class='history-controls>
+                <input type='number' id='historyLimit' min='1' max='50' value='20'>
+                <label for='historyLimit'>Entries</label>
+                <button id='loadHistory' class='btn btn-primary>Load</button>
+            </div>
+            <table id='historyTable'>
+                <thead>
+                    <tr>
+                        <th>Commit</th>
+                        <th>Message</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section class='append-section>
+            <h2><span class='icon></span> Append Memory</h2>
+            <div class='append-form>
+                <textarea id='appendContent' placeholder='Enter new memory content...'></textarea>
+                <input type='text' id='appendDescription' placeholder='Description (optional)'>
+                <button id='appendButton' class='btn btn-primary>Append</button>
+            </div>
+        </section>
+
+        <section class='rollback-section>
+            <h2><span class='icon></span> Rollback Memory</h2>
+            <div class='rollback-controls>
+                <select id='rollbackCommit'>
+                    <option value=''>Select commit to rollback...</option>
+                </select>
+                <input type='text' id='rollbackReason' placeholder='Reason for rollback'>
+                <button id='rollbackButton' class='btn btn-danger>Rollback</button>
+            </div>
+        </section>
+    </main>
+
+    <div id='notification' class='notification></div>
+</body>
+</html>
