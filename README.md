@@ -1,18 +1,43 @@
-# FORTRESS ZAG STANDALONE v4.1
+# FORTRESS ZAG STANDALONE v4.2
 
-**A fully autonomous, security-hardened AI assistant with Git-backed memory, cloud compute, and memory-optimized performance.**
+**A fully autonomous, security-hardened AI assistant with Memory Dashboard, Task Scheduler V2, Git-backed memory, cloud compute, and Bat-Gadget Protocol.**
 
-[![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)]()
 [![Security](https://img.shields.io/badge/security-hardened-green.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)]()
 
-## 🚀 What's New in v4.1
+## 🚀 What's New in v4.2
+
+### ✅ Memory Dashboard
+- **Web UI for memory management** at `http://localhost:3001`
+- **Glassmorphism design** with real-time updates
+- **Memory statistics** - size, files, commits, context usage
+- **Commit history** with rollback capability
+- **Append entries** directly from the dashboard
+- **Git-backed** - all changes tracked in git history
+
+### ✅ Task Scheduler V2
+- **Enhanced scheduling** with persistence and recovery
+- **Retry logic** with exponential backoff
+- **Dependency chains** - jobs wait for prerequisites
+- **Event-driven** - `jobSuccess`, `jobFailed`, `jobWaiting`
+- **Execution history** tracking with 100-entry limit
+- **Tag-based** organization and filtering
+
+## 🚀 What's in v4.1
+
+### ✅ Bat-Gadget Protocol (BGP)
+- **Utility Belt system** for modular capabilities
+- **GADGET.md standard** - YAML frontmatter + markdown
+- **Auto-equip** gadgets based on available tools
+- **Mission matching** - find best gadget for the task
+- **Compatible** with Anthropic's SKILL.md standard
 
 ### ✅ Performance Optimizations
-- **99% faster startup** - Lazy loading reduces boot time from 173ms to 2ms
-- **Memory-efficient** - On-demand module loading, pressure-aware cleanup
-- **Benchmarked** - 6MB RAM footprint, ready for server/VM deployment
-- **Optimized for VPS/Cloud** - Designed for always-on server environments
+- **99% faster startup** - Lazy loading reduces boot time
+- **Memory-efficient** - On-demand module loading
+- **Benchmarked** - 6MB RAM footprint
+- **Optimized for VPS/Cloud** - Always-on server environments
 
 ## ✨ What's in v4.0
 
@@ -79,6 +104,7 @@
 - `schedule` - Create scheduled tasks
 - **v4.0:** `memory_read` / `memory_append` / `memory_history` / `memory_rollback`
 - **v4.0:** `git_commit` / `git_status`
+- **v4.2:** `schedule_v2` - Enhanced scheduling with persistence
 
 ### 🔒 Security (3-Layer Defense)
 1. **Perimeter** - Input sanitization, prompt injection detection
@@ -92,6 +118,7 @@
 - **Discord** - Bot integration
 - **Web UI** - Browser interface
 - **REST API** - Programmatic access
+- **v4.2:** Memory Dashboard - Memory management UI
 - **v4.0:** GitHub Actions - Cloud compute integration
 
 ### 🧠 Intelligence
@@ -99,6 +126,7 @@
 - **Context Compaction** - Smart memory management
 - **Multi-Agent** - PM2-style orchestration
 - **MCP Integration** - External tool protocol
+- **v4.1:** Bat-Gadget Protocol - Modular skill system
 - **v4.0:** Git-backed Memory - Full history, rollback, sync
 
 ## 📦 Installation
@@ -201,6 +229,11 @@ Create `config.json`:
     "gitBacked": true,
     "memoryPath": "operating_system/MEMORY.md",
     "autoCommit": true
+  },
+  
+  "dashboard": {
+    "enabled": true,
+    "port": 3001
   }
 }
 ```
@@ -215,6 +248,17 @@ Zag> Check my email
 Zag: I don't have access to your email, but I can help you with...
 ```
 
+### v4.2: Memory Dashboard
+Open browser to `http://localhost:3001`
+
+Features:
+- **View and edit** memory content in real-time
+- **Memory statistics** - size, files, commits, context usage
+- **Commit history** with timestamps and messages
+- **Rollback** to any previous commit
+- **Append new entries** with descriptions
+- **Responsive design** works on mobile
+
 ### v4.0: Git-Backed Memory
 ```bash
 # View memory history
@@ -228,6 +272,37 @@ Zag: Memory rolled back successfully. Current state restored from abc123.
 # Sync with remote
 Zag> Sync memory
 Zag: Memory synced. Pulled 3 new commits from origin.
+```
+
+### v4.2: Task Scheduler V2
+```javascript
+// Schedule a job with dependencies
+await agent.schedulerV2.scheduleJob(
+  'nightly-report',
+  '0 2 * * *',  // Daily at 2 AM
+  async () => {
+    // Job implementation
+    console.log('Generating nightly report...');
+  },
+  {
+    description: 'Generate daily analytics report',
+    dependencies: ['data-sync'],  // Wait for data-sync job
+    maxRetries: 3,
+    tags: ['analytics', 'nightly']
+  }
+);
+
+// Get scheduler stats
+const stats = agent.schedulerV2.getStats();
+console.log(`Total jobs: ${stats.totalJobs}`);
+console.log(`Active: ${stats.activeJobs}`);
+console.log(`Failed: ${stats.failedJobs}`);
+
+// View execution history
+const history = agent.schedulerV2.getHistory({ 
+  jobId: 'nightly-report',
+  limit: 10 
+});
 ```
 
 ### Web UI
@@ -282,6 +357,54 @@ git push origin job/analyze-codebase
 
 ## 🔧 Advanced Features
 
+### v4.1: Bat-Gadget Protocol
+
+Create custom gadgets in `bat-gadgets/`:
+
+```markdown
+---
+name: my-custom-gadget
+description: Custom capability for specific tasks
+tools:
+  - read
+  - write
+  - exec
+tags:
+  - custom
+  - automation
+---
+
+# My Custom Gadget
+
+When you encounter [specific scenario], use this gadget.
+
+## Steps
+1. Read the relevant files
+2. Execute the custom command
+3. Validate the results
+```
+
+### v4.2: Memory Dashboard API
+
+```javascript
+// Access dashboard programmatically
+const { MemoryDashboard } = require('./src/dashboard');
+
+const dashboard = new MemoryDashboard({
+  port: 3001,
+  memoryPath: 'operating_system/MEMORY.md'
+});
+
+await dashboard.start();
+
+// API endpoints:
+// GET  /api/memory          - Read memory content
+// GET  /api/memory/history  - Get commit history
+// GET  /api/memory/stats    - Get memory statistics
+// POST /api/memory/append   - Append new content
+// POST /api/memory/rollback - Rollback to commit
+```
+
 ### v4.0: Git-Backed Memory Operations
 
 ```javascript
@@ -330,29 +453,15 @@ await agent.executeTool('browser_extract', {
 });
 ```
 
-### Scheduled Tasks
-```javascript
-// Schedule a task
-await agent.executeTool('schedule', {
-  id: 'daily-backup',
-  expression: 'daily at 9am',
-  task: 'tar -czf backup.tar.gz ./workspace'
-});
-
-// List all schedules
-await agent.executeTool('list_schedules', {});
-
-// Remove schedule
-await agent.executeTool('unschedule', { id: 'daily-backup' });
-```
-
 ### Programmatic API
 ```javascript
 const { FortressZag } = require('./src/core/agent');
 
 const agent = new FortressZag({ 
   workdir: './data',
-  repoRoot: process.cwd()
+  repoRoot: process.cwd(),
+  enableDashboard: true,
+  useSchedulerV2: true
 });
 
 await agent.initialize();
@@ -369,6 +478,9 @@ console.log(agent.gitMemory.stats());
 
 // Check secrets status
 console.log('LLM Secrets:', Object.keys(agent.secrets.getAllLLMSecrets()));
+
+// Graceful shutdown
+await agent.stop();
 ```
 
 ## 🐳 Docker Deployment
@@ -382,6 +494,7 @@ docker run -d \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/.git:/app/.git \
   -p 3000:3000 \
+  -p 3001:3001 \
   -e SECRETS="$(echo '{...}' | base64)" \
   -e LLM_SECRETS="$(echo '{...}' | base64)" \
   fortress-zag
@@ -410,10 +523,13 @@ docker run -d \
 | **Framework** | Required | ❌ None |
 | **Security** | Basic | ✅ 3-layer hardened |
 | **Browser** | ✅ Native | ✅ Playwright |
-| **Scheduler** | ✅ Native | ✅ Built-in |
-| **Web UI** | ✅ Native | ✅ Built-in |
+| **Scheduler** | ✅ Native | ✅ V2 with persistence |
+| **Web UI** | ✅ Native | ✅ + Memory Dashboard |
 | **Portability** | Limited | ✅ Universal |
 | **Control** | Framework | ✅ Full source |
+| **v4.2:** Memory Dashboard | ❌ | ✅ Web UI for memory |
+| **v4.2:** Task Scheduler V2 | ❌ | ✅ Persistence + retry |
+| **v4.1:** Bat-Gadget Protocol | ❌ | ✅ Modular skills |
 | **v4.0:** Git-Backed Memory | ❌ | ✅ Full history |
 | **v4.0:** Two-Tier Secrets | ❌ | ✅ Protected keys |
 | **v4.0:** Cloud Compute | ❌ | ✅ GitHub Actions |
@@ -457,7 +573,18 @@ fortress-zag-standalone/
 │   │   └── secrets-manager.js # v4.0: Two-tier secrets
 │   ├── memory/
 │   │   └── git-backed.js     # v4.0: Git-backed memory
+│   ├── dashboard/            # v4.2: Memory Dashboard
+│   │   ├── index.js          # Express server
+│   │   └── public/           # Static files
+│   ├── scheduler/            # v4.2: Task Scheduler V2
+│   │   └── scheduler-v2.js   # Enhanced scheduling
+│   ├── bat-gadget-protocol/  # v4.1: BGP
+│   │   ├── bat-gadget-loader.js
+│   │   └── bat-gadget-registry.js
 │   └── index.js              # Main entry
+├── bat-gadgets/              # v4.1: Modular gadgets
+│   ├── web-scraping/GADGET.md
+│   └── code-analysis/GADGET.md
 ├── skills/                    # Enhancement skills
 ├── data/                      # Runtime data (created)
 ├── operating_system/          # v4.0: Memory, SOUL, SKILLS
@@ -490,14 +617,23 @@ class MyProviderConnector {
 }
 ```
 
-### v4.0: Adding Memory Tools
-Edit `src/core/agent.js` in the `executeTool` method:
+### v4.1: Adding Bat-Gadgets
+Create `bat-gadgets/my-gadget/GADGET.md`:
 
-```javascript
-if (toolName === 'my_memory_tool') {
-  // Implementation using this.gitMemory
-  return { success: true, result };
-}
+```markdown
+---
+name: my-gadget
+description: What this gadget does
+tools:
+  - read
+  - write
+tags:
+  - custom
+---
+
+# My Gadget
+
+Instructions for the LLM...
 ```
 
 ## 📄 License
