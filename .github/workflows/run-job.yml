@@ -1,0 +1,67 @@
+name: Run Fortress Zag v4.0 Job
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_description:
+        description: 'Job description or task to execute'
+        required: true
+        type: string
+      branch:
+        description: 'Branch to run on (default: main)'
+        required: false
+        default: 'main'
+        type: string
+  
+  create:
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'job/') || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Configure Git
+        run: |
+          git config user.name "Fortress Zag"
+          git config user.email "zag@fortress.local"
+
+      - name: Run Fortress Zag Agent
+        env:
+          SECRETS: ${{ secrets.SECRETS }}
+          LLM_SECRETS: ${{ secrets.LLM_SECRETS }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_DESCRIPTION: ${{ github.event.inputs.job_description }}
+        run: |
+          if [ -n "$JOB_DESCRIPTION" ]; then
+            echo "$JOB_DESCRIPTION" > job.md
+            node src/core/agent.js --jobDescription "$(cat job.md)"
+          else
+            node src/core/agent.js
+          fi
+
+      - name: Commit changes
+        run: |
+          git add -A
+          git commit -m "Job completed: $(date -u +%Y-%m-%d-%H:%M:%S)" || echo "No changes to commit"
+          git push
