@@ -1,7 +1,12 @@
 /**
- * FORTRESS ZAG STANDALONE v4.2 - Core Agent
+ * FORTRESS ZAG STANDALONE v4.3 - Core Agent
  * 
  * Complete autonomous agent with all capabilities.
+ * 
+ * v4.3 Enhancements:
+ * - Verification System - Self-check before committing changes
+ * - Checkpoint System - Save/restore agent state at milestones
+ * - Continuous Evaluation - Automated quality checks on outputs
  * 
  * v4.2 Enhancements:
  * - Memory Dashboard - Web UI for memory management
@@ -45,6 +50,11 @@ const { BatGadgetRegistry } = require('../bat-gadget-protocol/index.js');
 // v4.2: P1 Enhancements
 const { MemoryDashboard } = require('../dashboard/index.js');
 const { TaskSchedulerV2 } = require('../scheduler/scheduler-v2.js');
+
+// v4.3: P2 Enhancements
+const { VerificationSystem } = require('../verification/verification-system.js');
+const { CheckpointSystem } = require('../checkpoint/checkpoint-system.js');
+const { ContinuousEvaluation } = require('../evaluation/continuous-evaluation.js');
 
 // Skills
 const continuousLearning = require('../../skills/continuous-learning/continuous-learning.js');
@@ -94,6 +104,24 @@ class FortressZag extends EventEmitter {
     this.schedulerV2 = null;
     this.useSchedulerV2 = options.useSchedulerV2 || false;
     
+    // v4.3: Verification System
+    this.verification = new VerificationSystem({
+      enabled: options.enableVerification !== false,
+      strictMode: options.strictVerification || false
+    });
+    
+    // v4.3: Checkpoint System
+    this.checkpoints = new CheckpointSystem({
+      checkpointsDir: path.join(this.workdir, 'checkpoints'),
+      maxCheckpoints: options.maxCheckpoints || 50
+    });
+    
+    // v4.3: Continuous Evaluation
+    this.evaluation = new ContinuousEvaluation({
+      enabled: options.enableEvaluation !== false,
+      evaluationInterval: options.evaluationInterval || 60000
+    });
+    
     // System prompt (built on demand)
     this._systemPrompt = null;
   }
@@ -103,7 +131,8 @@ class FortressZag extends EventEmitter {
    */
   async initialize() {
     console.log('╔════════════════════════════════════════════════════════╗');
-    console.log('║  FORTRESS ZAG STANDALONE v4.2                          ║');
+    console.log('║  FORTRESS ZAG STANDALONE v4.3                          ║');
+    console.log('║  Verification • Checkpoints • Continuous Eval          ║');
     console.log('║  Memory Dashboard • Task Scheduler V2 • Bat-Gadgets    ║');
     console.log('║  Git-Backed Memory • Two-Tier Secrets • Cloud Ready    ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
@@ -187,6 +216,25 @@ class FortressZag extends EventEmitter {
         console.log(`\nMemory Dashboard: ⚠️  ${error.message}`);
         this.memoryDashboard = null;
       }
+    }
+    
+    // v4.3: Initialize P2 systems
+    console.log('\nv4.3 Reliability Systems:');
+    
+    // Verification system
+    const verificationStats = this.verification.getStats();
+    console.log(`  Verification: ${this.verification.enabled ? '✅' : '❌'} (${verificationStats.total} checks run)`);
+    
+    // Checkpoint system
+    const checkpointStats = this.checkpoints.getStats();
+    console.log(`  Checkpoints: ${checkpointStats.total} saved (${(checkpointStats.totalSize / 1024).toFixed(1)} KB)`);
+    
+    // Continuous evaluation
+    if (this.evaluation.enabled) {
+      this.evaluation.start();
+      console.log(`  Continuous Eval: ✅ (monitoring every ${this.evaluation.evaluationInterval / 1000}s)`);
+    } else {
+      console.log(`  Continuous Eval: ❌`);
     }
     
     this.initialized = true;
@@ -667,7 +715,17 @@ Session: ${this.sessionId}`);
         llmSecretsCount: Object.keys(this.secrets.getAllLLMSecrets()).length
       },
       dashboard: this.memoryDashboard ? `http://localhost:${this.memoryDashboard.port}` : null,
-      schedulerV2: this.schedulerV2 ? this.schedulerV2.getStats() : null
+      schedulerV2: this.schedulerV2 ? this.schedulerV2.getStats() : null,
+      // v4.3: P2 systems status
+      verification: this.verification ? {
+        enabled: this.verification.enabled,
+        stats: this.verification.getStats()
+      } : null,
+      checkpoints: this.checkpoints ? this.checkpoints.getStats() : null,
+      evaluation: this.evaluation ? {
+        enabled: this.evaluation.enabled,
+        stats: this.evaluation.getStats()
+      } : null
     };
   }
   
@@ -693,7 +751,7 @@ Session: ${this.sessionId}`);
   }
   
   /**
-   * v4.2: Stop the agent gracefully
+   * v4.3: Stop the agent gracefully
    */
   async stop() {
     console.log('\nStopping Fortress Zag...');
@@ -706,6 +764,12 @@ Session: ${this.sessionId}`);
     if (this.memoryDashboard) {
       this.memoryDashboard.stop();
       console.log('  Memory Dashboard: Stopped');
+    }
+    
+    // v4.3: Stop P2 systems
+    if (this.evaluation) {
+      this.evaluation.stop();
+      console.log('  Continuous Evaluation: Stopped');
     }
     
     this.initialized = false;

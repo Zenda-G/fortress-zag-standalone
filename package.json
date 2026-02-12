@@ -1,7 +1,7 @@
 {
   "name": "fortress-zag-standalone",
-  "version": "4.2.0",
-  "description": "Fully autonomous AI assistant v4.2 - Memory Dashboard, Task Scheduler V2, Bat-Gadget Protocol, Git-backed memory, two-tier secrets, GitHub Actions cloud compute, browser automation",
+  "version": "4.3.0",
+  "description": "Fully autonomous AI assistant v4.3 - Verification, Checkpoints, Continuous Eval, Memory Dashboard, Task Scheduler V2, Bat-Gadget Protocol, Git-backed memory, cloud compute",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -10,6 +10,7 @@
     "test:v4": "node test-v4.js",
     "test:bgp": "node test-bgp.js",
     "test:p1": "node test-p1.js",
+    "test:p2": "node test-p2.js",
     "install:browser": "npx playwright install chromium",
     "docker:build": "docker build -t fortress-zag .",
     "docker:run": "docker run -v $(pwd)/data:/app/data -p 3000:3000 fortress-zag",
